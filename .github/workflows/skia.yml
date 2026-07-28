@@ -23,8 +23,6 @@ jobs:
 
       - name: Fetch Skia sources
         run: |
-          mkdir -p skia
-          cd skia
           fetch skia
 
       - name: Sync Skia dependencies
