@@ -54,7 +54,7 @@ jobs:
           } else {
             throw 'Skia source root not found in skia or skia/src'
           }
-          gn gen out\\Static --args='is_official_build=true skia_enable_tools=false skia_enable_gpu=false skia_use_system_zlib=true skia_use_system_expat=true'
+          gn gen out\\Static --args="is_official_build=true skia_enable_tools=false skia_use_system_zlib=false skia_use_system_expat=false skia_use_system_libpng=false"
 
       - name: Build Skia
         shell: pwsh
@@ -72,4 +72,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: skia-build
-          path: skia\\out\\Static
+          path: |
+            skia\\out\\Static
+            skia\\src\\out\\Static
