@@ -6,42 +6,70 @@ on:
 jobs:
   skia:
     name: Fetch and build Skia
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install build dependencies
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        shell: pwsh
         run: |
-          sudo apt-get update
-          sudo apt-get install -y git python3 python3-pip python3-venv ninja-build build-essential pkg-config zlib1g-dev libgtk-3-dev libglib2.0-dev
+          python -m pip install --upgrade pip
 
       - name: Clone depot_tools
+        shell: pwsh
         run: |
           git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
-          echo "PATH=$(pwd)/depot_tools:$PATH" >> $GITHUB_ENV
+          Add-Content -Path $env:GITHUB_ENV -Value "PATH=${{ github.workspace }}\\depot_tools;$env:PATH"
 
       - name: Fetch Skia sources
+        shell: pwsh
         run: |
           fetch skia
 
       - name: Sync Skia dependencies
+        shell: pwsh
         run: |
-          cd skia
+          if (Test-Path 'skia\\tools\\git-sync-deps') {
+            Set-Location 'skia'
+          } elseif (Test-Path 'skia\\src\\tools\\git-sync-deps') {
+            Set-Location 'skia\\src'
+          } else {
+            throw 'git-sync-deps not found in skia or skia/src'
+          }
           python tools/git-sync-deps
 
       - name: Generate Skia build files
+        shell: pwsh
         run: |
-          cd skia
-          gn gen out/Static --args='is_official_build=true skia_enable_tools=false skia_enable_gpu=false skia_use_system_zlib=true skia_use_system_expat=true'
+          if (Test-Path 'skia\\tools\\gn.exe') {
+            Set-Location 'skia'
+          } elseif (Test-Path 'skia\\src\\tools\\gn.exe') {
+            Set-Location 'skia\\src'
+          } else {
+            throw 'gn.exe not found in skia or skia/src'
+          }
+          gn gen out\\Static --args='is_official_build=true skia_enable_tools=false skia_enable_gpu=false skia_use_system_zlib=true skia_use_system_expat=true'
 
       - name: Build Skia
+        shell: pwsh
         run: |
-          cd skia
-          ninja -C out/Static
+          if (Test-Path 'skia\\out\\Static') {
+            Set-Location 'skia'
+          } elseif (Test-Path 'skia\\src\\out\\Static') {
+            Set-Location 'skia\\src'
+          } else {
+            throw 'output directory not found'
+          }
+          ninja -C out\\Static
 
       - name: Upload Skia artifact
         uses: actions/upload-artifact@v4
         with:
           name: skia-build
-          path: skia/out/Static
+          path: skia\\out\\Static
