@@ -25,7 +25,7 @@ jobs:
         shell: pwsh
         run: |
           git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git depot_tools
-          Add-Content -Path $env:GITHUB_ENV -Value "PATH=${{ github.workspace }}\\depot_tools;$env:PATH"
+          Add-Content -Path $env:GITHUB_ENV -Value "PATH=${{ github.workspace }}\depot_tools;$env:PATH"
 
       - name: Fetch Skia sources
         shell: pwsh
@@ -35,43 +35,17 @@ jobs:
       - name: Sync Skia dependencies
         shell: pwsh
         run: |
-          if (Test-Path 'skia\\tools\\git-sync-deps') {
-            Set-Location 'skia'
-          } elseif (Test-Path 'skia\\src\\tools\\git-sync-deps') {
-            Set-Location 'skia\\src'
-          } else {
-            throw 'git-sync-deps not found in skia or skia/src'
-          }
-          python tools/git-sync-deps
+          cd skia
+          python3 tools/git-sync-deps
 
-      - name: Generate Skia build files
+      - name: Generate GN Build Files
         shell: pwsh
         run: |
-          if (Test-Path 'skia\\src\\BUILD.gn') {
-            Set-Location 'skia\\src'
-          } elseif (Test-Path 'skia\\BUILD.gn') {
-            Set-Location 'skia'
-          } else {
-            throw 'Skia source root not found in skia or skia/src'
-          }
-          gn gen out\\Static --args="is_official_build=true skia_enable_tools=false skia_use_system_zlib=false skia_use_system_expat=false skia_use_system_libpng=false"
+          cd skia
+          bin/gn gen out/Static --args='is_official_build=true skia_use_system_libjpeg_turbo=false'
 
       - name: Build Skia
         shell: pwsh
         run: |
-          if (Test-Path 'skia\\src\\BUILD.gn') {
-            Set-Location 'skia\\src'
-          } elseif (Test-Path 'skia\\BUILD.gn') {
-            Set-Location 'skia'
-          } else {
-            throw 'Skia source root not found in skia or skia/src'
-          }
-          ninja -C out\\Static
-
-      - name: Upload Skia artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: skia-build
-          path: |
-            skia\\out\\Static
-            skia\\src\\out\\Static
+          cd skia
+          ninja -C out/Static
