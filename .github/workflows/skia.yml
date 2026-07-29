@@ -42,8 +42,8 @@ jobs:
         shell: pwsh
         run: |
           cd skia
-          bin/gn gen out/Static --args='is_official_build=true skia_use_system_libjpeg_turbo=false'
-
+          bin/gn gen out/Static --args='is_official_build=true skia_use_system_libjpeg_turbo=false skia_use_libjpeg_turbo_decode=true skia_use_libjpeg_turbo_encode=true'
+                
       - name: Build Skia
         shell: pwsh
         run: |
